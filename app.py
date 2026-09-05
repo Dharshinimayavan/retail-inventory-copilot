@@ -3,7 +3,9 @@ import json
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
 from google import genai
+from dotenv import load_dotenv
 
+load_dotenv()
 # -----------------------------
 # Sample Retail Data
 # -----------------------------
@@ -63,9 +65,9 @@ PRODUCTS = [
 # Deterministic Analysis
 # -----------------------------
 def analyze_inventory():
+
     low_stock = []
     overstock = []
-    top_products = []
 
     for p in PRODUCTS:
 
@@ -91,6 +93,24 @@ def analyze_inventory():
 
 
 # -----------------------------
+# Clean Gemini Response
+# -----------------------------
+def clean_ai_response(text):
+
+    if not text:
+        return "No AI response was generated."
+
+    text = text.replace("### ", "")
+    text = text.replace("## ", "")
+    text = text.replace("# ", "")
+    text = text.replace("**", "")
+    text = text.replace("---", "")
+    text = text.replace("* ", "- ")
+
+    return text.strip()
+
+
+# -----------------------------
 # Gemini AI
 # -----------------------------
 def ask_gemini(question):
@@ -98,13 +118,20 @@ def ask_gemini(question):
     api_key = os.environ.get("GEMINI_API_KEY")
 
     if not api_key:
+
         return {
-            "answer": "Gemini API key is not configured. Showing data-based analysis instead.",
-            "evidence": "Local retail dataset"
+            "answer":
+            "Gemini API key is not configured. Showing data-based analysis instead.",
+
+            "evidence":
+            "Local retail dataset"
         }
 
     try:
-        client = genai.Client(api_key=api_key)
+
+        client = genai.Client(
+            api_key=api_key
+        )
 
         inventory_analysis = analyze_inventory()
 
@@ -112,7 +139,7 @@ def ask_gemini(question):
 You are a retail sales and inventory assistant.
 
 Answer ONLY using the retail data provided below.
-Do not invent numbers or products.
+Do not invent numbers, products, sales values, or stock values.
 
 Retail data:
 {json.dumps(PRODUCTS, indent=2)}
@@ -124,12 +151,18 @@ Manager question:
 {question}
 
 Requirements:
-1. Give a clear answer.
-2. Mention actual numbers from the data.
+
+1. Give a clear and direct answer.
+2. Mention actual numbers from the provided data.
 3. Explain the evidence behind the answer.
 4. If the data cannot answer the question, clearly say:
    "The available data is insufficient to answer this."
 5. Recommend an action when appropriate.
+6. Use plain text only.
+7. Do not use Markdown formatting.
+8. Do not use symbols such as ###, **, *, or ---.
+9. Use simple numbered sections when useful.
+10. Keep the answer concise and easy for a retail manager to understand.
 """
 
         response = client.models.generate_content(
@@ -137,17 +170,29 @@ Requirements:
             contents=prompt
         )
 
+        clean_answer = clean_ai_response(
+            response.text
+        )
+
         return {
-            "answer": response.text,
-            "evidence": "Retail dataset + deterministic inventory analysis"
+            "answer": clean_answer,
+            "evidence":
+            "Retail dataset + deterministic inventory analysis"
         }
 
     except Exception as e:
-        print("GEMINI ERROR:", repr(e))
+
+        print(
+            "GEMINI ERROR:",
+            repr(e)
+        )
+
         return {
-            "answer": "AI service unavailable. The system could not complete the AI analysis.",
-            "evidence": "Local data remains available",
-            "error": str(e)
+            "answer":
+            "AI service is temporarily unavailable. Please try again.",
+
+            "evidence":
+            "Local retail dataset remains available"
         }
 
 
@@ -157,10 +202,17 @@ Requirements:
 HTML = """
 <!DOCTYPE html>
 <html>
+
 <head>
-    <title>Retail Sales & Inventory Copilot</title>
+
+    <meta charset="UTF-8">
+
+    <title>
+        Retail Sales & Inventory Copilot
+    </title>
 
     <style>
+
         * {
             box-sizing: border-box;
         }
@@ -281,6 +333,7 @@ HTML = """
         }
 
         @media(max-width: 800px) {
+
             .cards {
                 grid-template-columns: 1fr;
             }
@@ -289,159 +342,349 @@ HTML = """
                 width: 100%;
                 margin-bottom: 10px;
             }
+
         }
+
     </style>
+
 </head>
+
 
 <body>
 
+
 <header>
-    <h1>🛍️ Retail Sales & Inventory Copilot</h1>
-    <p>AI-powered decision support for retail managers</p>
+
+    <h1>
+        🛍️ Retail Sales & Inventory Copilot
+    </h1>
+
+    <p>
+        AI-powered decision support for retail managers
+    </p>
+
 </header>
+
 
 <div class="container">
 
+
+    <!-- Dashboard Cards -->
+
     <div class="cards">
 
-        <div class="card">
-            <h3>Products</h3>
-            <div class="number" id="productCount">-</div>
-        </div>
 
         <div class="card">
-            <h3>Low Stock</h3>
-            <div class="number" id="lowStock">-</div>
+
+            <h3>
+                Products
+            </h3>
+
+            <div
+                class="number"
+                id="productCount"
+            >
+                -
+            </div>
+
         </div>
 
+
         <div class="card">
-            <h3>Overstock</h3>
-            <div class="number" id="overStock">-</div>
+
+            <h3>
+                Low Stock
+            </h3>
+
+            <div
+                class="number"
+                id="lowStock"
+            >
+                -
+            </div>
+
         </div>
+
+
+        <div class="card">
+
+            <h3>
+                Overstock
+            </h3>
+
+            <div
+                class="number"
+                id="overStock"
+            >
+                -
+            </div>
+
+        </div>
+
 
     </div>
 
 
+    <!-- Inventory -->
+
     <div class="section">
-        <h2>📦 Inventory Overview</h2>
+
+        <h2>
+            📦 Inventory Overview
+        </h2>
+
 
         <table>
+
             <thead>
+
                 <tr>
-                    <th>Product</th>
-                    <th>Category</th>
-                    <th>Stock</th>
-                    <th>Monthly Sales</th>
-                    <th>Status</th>
+
+                    <th>
+                        Product
+                    </th>
+
+                    <th>
+                        Category
+                    </th>
+
+                    <th>
+                        Stock
+                    </th>
+
+                    <th>
+                        Monthly Sales
+                    </th>
+
+                    <th>
+                        Status
+                    </th>
+
                 </tr>
+
             </thead>
 
-            <tbody id="inventoryTable"></tbody>
+
+            <tbody
+                id="inventoryTable"
+            ></tbody>
+
         </table>
+
     </div>
 
 
+    <!-- AI Copilot -->
+
     <div class="section">
 
-        <h2>🤖 Ask the Copilot</h2>
+
+        <h2>
+            🤖 Ask the Copilot
+        </h2>
+
 
         <p>
             Ask questions using normal language.
         </p>
+
 
         <input
             id="question"
             placeholder="Example: Which products need attention today?"
         >
 
-        <button onclick="askQuestion()">Ask AI</button>
+
+        <button onclick="askQuestion()">
+            Ask AI
+        </button>
+
 
         <div id="answer">
+
             Your AI answer will appear here.
+
         </div>
 
+
     </div>
+
 
 </div>
 
 
 <script>
 
+
 async function loadDashboard() {
 
-    const response = await fetch("/api/dashboard");
-    const data = await response.json();
+    const response =
+        await fetch("/api/dashboard");
 
-    document.getElementById("productCount").innerText =
+    const data =
+        await response.json();
+
+
+    document.getElementById(
+        "productCount"
+    ).innerText =
         data.products.length;
 
-    document.getElementById("lowStock").innerText =
+
+    document.getElementById(
+        "lowStock"
+    ).innerText =
         data.analysis.low_stock.length;
 
-    document.getElementById("overStock").innerText =
+
+    document.getElementById(
+        "overStock"
+    ).innerText =
         data.analysis.overstock.length;
 
-    const table = document.getElementById("inventoryTable");
+
+    const table =
+        document.getElementById(
+            "inventoryTable"
+        );
+
 
     table.innerHTML = "";
+
 
     data.products.forEach(p => {
 
         let status = "Healthy";
+
         let className = "";
 
+
         if (p.stock <= 10) {
+
             status = "LOW STOCK";
+
             className = "low";
+
         }
 
-        if (p.stock >= 60 && p.monthly_sales < 50) {
+
+        if (
+            p.stock >= 60 &&
+            p.monthly_sales < 50
+        ) {
+
             status = "OVERSTOCK";
+
             className = "over";
+
         }
+
 
         table.innerHTML += `
+
             <tr>
-                <td>${p.product}</td>
-                <td>${p.category}</td>
-                <td>${p.stock}</td>
-                <td>${p.monthly_sales}</td>
-                <td class="${className}">${status}</td>
+
+                <td>
+                    ${p.product}
+                </td>
+
+                <td>
+                    ${p.category}
+                </td>
+
+                <td>
+                    ${p.stock}
+                </td>
+
+                <td>
+                    ${p.monthly_sales}
+                </td>
+
+                <td class="${className}">
+                    ${status}
+                </td>
+
             </tr>
+
         `;
+
     });
+
 }
+
 
 
 async function askQuestion() {
 
     const question =
-        document.getElementById("question").value;
+        document.getElementById(
+            "question"
+        ).value;
+
 
     if (!question.trim()) {
-        alert("Please enter a question.");
+
+        alert(
+            "Please enter a question."
+        );
+
         return;
+
     }
 
-    document.getElementById("answer").innerText =
+
+    document.getElementById(
+        "answer"
+    ).innerText =
         "Analyzing retail data...";
 
-    const response = await fetch("/api/ask", {
-        method: "POST",
 
-        headers: {
-            "Content-Type": "application/json"
-        },
+    try {
 
-        body: JSON.stringify({
-            question: question
-        })
-    });
+        const response =
+            await fetch(
+                "/api/ask",
+                {
+                    method: "POST",
 
-    const data = await response.json();
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-    document.getElementById("answer").innerText =
-        data.answer + "\\n\\nEvidence: " + data.evidence;
+                    body: JSON.stringify({
+                        question:
+                            question
+                    })
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        document.getElementById(
+            "answer"
+        ).innerText =
+
+            data.answer +
+
+            "\\n\\nEvidence: " +
+
+            data.evidence;
+
+    }
+
+    catch (error) {
+
+        document.getElementById(
+            "answer"
+        ).innerText =
+            "Unable to connect to the AI service.";
+
+    }
+
 }
 
 
@@ -449,39 +692,67 @@ loadDashboard();
 
 </script>
 
+
 </body>
+
 </html>
 """
-
 
 # -----------------------------
 # HTTP Server
 # -----------------------------
 class Handler(BaseHTTPRequestHandler):
 
+    # -------------------------
+    # Send JSON Response
+    # -------------------------
     def send_json(self, data):
 
-        body = json.dumps(data).encode()
+        body = json.dumps(
+            data,
+            ensure_ascii=False
+        ).encode("utf-8")
 
         self.send_response(200)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", len(body))
+
+        self.send_header(
+            "Content-Type",
+            "application/json; charset=utf-8"
+        )
+
+        self.send_header(
+            "Content-Length",
+            str(len(body))
+        )
+
         self.end_headers()
 
         self.wfile.write(body)
 
 
+    # -------------------------
+    # GET Requests
+    # -------------------------
     def do_GET(self):
 
         path = urlparse(self.path).path
 
         if path == "/":
 
-            body = HTML.encode()
+            body = HTML.encode("utf-8")
 
             self.send_response(200)
-            self.send_header("Content-Type", "text/html")
-            self.send_header("Content-Length", len(body))
+
+            self.send_header(
+                "Content-Type",
+                "text/html; charset=utf-8"
+            )
+
+            self.send_header(
+                "Content-Length",
+                str(len(body))
+            )
+
             self.end_headers()
 
             self.wfile.write(body)
@@ -499,23 +770,48 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
 
 
+    # -------------------------
+    # POST Requests
+    # -------------------------
     def do_POST(self):
 
         path = urlparse(self.path).path
 
         if path == "/api/ask":
 
-            length = int(self.headers.get("Content-Length", 0))
+            try:
 
-            body = self.rfile.read(length)
+                length = int(
+                    self.headers.get(
+                        "Content-Length",
+                        0
+                    )
+                )
 
-            data = json.loads(body)
+                body = self.rfile.read(length)
 
-            result = ask_gemini(
-                data.get("question", "")
-            )
+                data = json.loads(body)
 
-            self.send_json(result)
+                result = ask_gemini(
+                    data.get(
+                        "question",
+                        ""
+                    )
+                )
+
+                self.send_json(result)
+
+            except Exception:
+
+                self.send_json({
+
+                    "answer":
+                        "Invalid request. Please try again.",
+
+                    "evidence":
+                        "Local retail dataset"
+
+                })
 
         else:
 
@@ -534,6 +830,7 @@ if __name__ == "__main__":
     )
 
     print("Retail Copilot running at:")
+
     print("http://localhost:8000")
 
     server.serve_forever()
