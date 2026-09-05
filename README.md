@@ -4,7 +4,7 @@ TRACK_ID=PS03
 
 An AI-powered retail assistant that helps store managers understand sales and inventory data, identify products that need attention, and receive practical, data-grounded recommendations through natural-language questions.
 
-## Live Demo
+## Live Demo project link
 
 https://retail-inventory-copilot.onrender.com/
 
